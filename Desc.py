@@ -6,7 +6,10 @@ class Desc:
     def __init__(self, desc=None, size=3):
         self.zero_x, self.zero_y = None, None
         if desc:
+            # NEED DESC VALIDATION
             self._desc = desc
+            self.size = len(desc)
+            self._find_zero_field()
         else:
             self.size = size
             self._desc = self._create_correct_desc()
@@ -16,6 +19,14 @@ class Desc:
         numbers[-1] = 0
         self.zero_x, self.zero_y = self.size - 1, self.size - 1
         return [numbers[i*self.size:(i+1)*self.size] for i in range(self.size)]
+
+    def _find_zero_field(self):
+        for i in range(self.size):
+            for j in range(self.size):
+                if self._desc[i][j] == 0:
+                    self.zero_x = i
+                    self.zero_y = j
+                    break
 
     def make_random_desc(self):
         numbers = [number for number in range(self.size * self.size)]

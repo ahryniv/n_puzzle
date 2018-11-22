@@ -9,7 +9,7 @@ class AlgorithmA:
         self._heuristic_algorithm = heuristic_algorithm()
 
     def solve(self, desc):
-        start_statement = DescStatement(desc, weight=0, father=None)
+        start_statement = DescStatement(desc, path_from_start=0, heuristic_weight=0, father=None)
         opened = defaultdict(lambda: [])
         opened[0].append(start_statement)
         closed = []
@@ -20,8 +20,9 @@ class AlgorithmA:
                 del opened[index]
             closed.append(current_statement)
             founded = current_statement.get_daughters(opened, self._heuristic_algorithm)
-            # sys.stdout(len(opened))
+            sys.stdout.write("\rOpened: {}, Closed: {}".format(str(len(opened)), str(len(closed))))
             if founded:
+                print()
                 print("Success")
                 print(founded.desc)
                 return self.get_movements(founded)
@@ -38,9 +39,10 @@ class AlgorithmA:
 
 
 class DescStatement:
-    def __init__(self, desc, weight, father, movement=None):
+    def __init__(self, desc, path_from_start, heuristic_weight, father, movement=None):
         self.desc = desc
-        self.weight = weight
+        self.path_from_start = path_from_start
+        self.heuristic_weight = heuristic_weight
         self.father = father
         self.movement = movement
 
@@ -49,13 +51,15 @@ class DescStatement:
             new_desc = copy.deepcopy(self.desc)
             try:
                 func(new_desc, new_desc.zero_x, new_desc.zero_y)
+                
                 movement = Movement(new_desc.zero_x, new_desc.zero_y, new_desc.opposite_operations[func_name])
-                new_statement = DescStatement(new_desc,
-                                              self.weight + 1 + heuristic.calculate(new_desc),
+                new_statement = DescStatement(desc=new_desc,
+                                              path_from_start=self.path_from_start + 1,
+                                              heuristic_weight=heuristic.calculate(new_desc),
                                               father=self,
                                               movement=movement)
-                # if
-                (opened_dict[new_statement.weight]).append(new_statement)
+
+                (opened_dict[new_statement.path_from_start + new_statement.heuristic_weight]).append(new_statement)
                 if new_desc.get_not_placed_tiles() == 0:
                     return new_statement
             except Exceptions.MovingDescException:
