@@ -1,35 +1,52 @@
 import time
-import Algorithm
+import Algorithm as Algorithm
 import Heuristics
 from Desc import Desc
 
-if __name__ == "__main__":
-    try:
-        # size_desc = int(input("Give me size of desc: "))
-        #
-        # desc = Desc(size=4)
-        # desc.shuffle_desc(20)
-        # print("Shuffle desc")
-        # print(desc)
+'''
+По оптимізації:
+1. в класі OpenedListContainer переглянути реалізацію 'dict_for_check', щоб вона чітко працювала в методі 'has'
+    Можливо є сенс спробувати інший тип даних для 'dict_for_check'. Наприклад SortedList
+2. в класі DescStatement у функції get_daughters у стрічці:
+    if new_desc.get_not_placed_tiles() == 0:
+    функція get_not_placed_tiles() не змінюється коректно на атрибут not_placed_tiles, а вони мають бути взаємозамінні. 
+    Це важливо тому що функція вираховує це значення динамічно. Є сенс зберігати це в змінній, щоб не перераховувати сотні разів.
+    Також функцію можна зробити приватною. 
+'''
 
-        # random_desc = Desc(size=size_desc)
+
+if __name__ == "__main__":
+    get_miliseconds = lambda: round(time.time() * 1000)
+    try:
+
+        # random_desc = Desc(size=4)
         # random_desc.make_random_desc()
         # print("Random desc")
         # print(random_desc)
+        #
+        # desc = Desc(size=4)
+        # desc.shuffle_desc(200)
+        # print("Shuffle desc")
+        # print(desc)
 
-        desc_field = [[5, 3, 7, 4],
-                      [2, 6, 1, 8],
-                      [13, 9, 11, 12],
-                      [0, 10, 14, 15]]
+        # desc_field = [[5, 3, 7, 4],
+        #               [2, 6, 1, 8],
+        #               [13, 9, 11, 12],
+        #               [0, 10, 14, 15]]
+        desc_field = [[1, 3, 10, 4],
+                      [7, 2, 8, 0],
+                      [5, 9, 15, 12],
+                      [13, 14, 6, 11]]
         desc = Desc(desc_field)
         print(desc)
 
-        get_miliseconds = lambda: round(time.time() * 1000)
         time1 = get_miliseconds()
         algorithm_1 = Algorithm.AlgorithmA(Heuristics.HeuristicNotPlacedTiles)
-        movements = algorithm_1.solve(desc)
+        result = algorithm_1.solve(desc)
+        movements = result[0]
         time2 = get_miliseconds()
         print(((time2 - time1) / 1000), "seconds")
+        print("Time for one check =", (time2 - time1) / result[1])
 
         print()
         print("Movements:")

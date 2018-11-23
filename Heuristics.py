@@ -4,4 +4,4 @@ class HeuristicNotPlacedTiles:
 
     @staticmethod
     def calculate(desc):
-        return desc.get_not_placed_tiles()
+        return desc.not_placed_tiles
