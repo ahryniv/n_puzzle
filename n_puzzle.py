@@ -20,14 +20,10 @@ if __name__ == "__main__":
         # print(random_desc)
         #
         # desc = Desc(size=4)
-        # desc.shuffle_desc(20)
+        # desc.shuffle_desc(30)
         # print("Shuffle desc")
         # print(desc)
 
-        # desc_field = [[5, 3, 7, 4],
-        #               [2, 6, 1, 8],
-        #               [13, 9, 11, 12],
-        #               [0, 10, 14, 15]]
         desc_field = [[1, 3, 10, 4],
                       [7, 2, 8, 0],
                       [5, 9, 15, 12],
@@ -37,11 +33,9 @@ if __name__ == "__main__":
 
         time1 = get_miliseconds()
         algorithm_1 = Algorithm.AlgorithmA(Heuristics.HeuristicNotPlacedTiles)
-        result = algorithm_1.solve(desc)
-        movements = result[0]
+        movements = algorithm_1.solve(desc)
         time2 = get_miliseconds()
         print(((time2 - time1) / 1000), "seconds")
-        print("Time for one check =", (time2 - time1) / result[1])
 
         print()
         print("Movements:")
@@ -50,3 +44,22 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print()
+
+
+# Closed > 32000, Terminated
+# desc_field = [[1, 7, 2, 3],
+#               [13, 0, 4, 8],
+#               [14, 5, 11, 10],
+#               [9, 6, 15, 12]]
+
+# Closed = 14274, Success
+# desc_field = [[1, 6, 4, 2],
+#               [9, 11, 5, 3],
+#               [13, 7, 0, 12],
+#               [14, 10, 8, 15]]
+
+# Closed = 3987, Success
+# desc_field = [[1, 3, 10, 4],
+#               [7, 2, 8, 0],
+#               [5, 9, 15, 12],
+#               [13, 14, 6, 11]]
