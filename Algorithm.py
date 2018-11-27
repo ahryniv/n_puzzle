@@ -36,25 +36,25 @@ class AlgorithmA:
 
 class OpenedListContainer:
     def __init__(self):
-        self._dict = defaultdict(lambda: [])
-        self._dict_for_check = defaultdict(lambda: [])
+        self._statements = defaultdict(lambda: [])
+        self._statements_for_check = defaultdict(lambda: [])
         ####
         # self.counter = 0
         ###
 
     def add(self, weight, statement):
-        self._dict[weight].append(statement)
-        self._dict_for_check[statement.desc.not_placed_tiles].append(statement)
+        self._statements[weight].append(statement)
+        self._statements_for_check[statement.desc.not_placed_tiles].append(statement)
 
     def pop_statement_with_min_weight(self):
-        index = min(self._dict)
-        statement = self._dict[index].pop()
-        if not self._dict[index]:
-            del self._dict[index]
+        index = min(self._statements)
+        statement = self._statements[index].pop()
+        if not self._statements[index]:
+            del self._statements[index]
         return statement
 
     def check_for_duplicates(self, new_desc, father):
-        for statement in self._dict_for_check[new_desc.not_placed_tiles]:
+        for statement in self._statements_for_check[new_desc.not_placed_tiles]:
             # self.counter += 1
             if statement.desc.not_placed_tiles != new_desc.not_placed_tiles:
                 continue
@@ -66,7 +66,7 @@ class OpenedListContainer:
         return False
 
     def __len__(self):
-        return len(self._dict)
+        return len(self._statements)
 
 
 class DescStatement:
