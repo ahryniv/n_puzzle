@@ -1,8 +1,9 @@
 import copy
 import sys
 from collections import defaultdict
-from sortedcontainers import SortedList
+# from sortedcontainers import SortedList
 import Exceptions
+
 
 class AlgorithmA:
     def __init__(self, heuristic_algorithm):
@@ -12,22 +13,17 @@ class AlgorithmA:
         start_statement = DescStatement(desc, path_from_start=0, heuristic_weight=0, father=None)
         opened = OpenedListContainer()
         opened.add(0, start_statement)
-        closed = []
+        closed_amount = 0
         while opened:
-            index = min(opened)
-            current_statement = opened.pop(index)
-            if not opened[index]:
-                del opened[index]
-            closed.append(current_statement)
+            current_statement = opened.pop_with_min_weight()
+            closed_amount += 1
             founded = current_statement.get_daughters(opened, self._heuristic_algorithm)
-            sys.stdout.write("\rOpened: {}, Closed: {}".format(str(len(opened)), str(len(closed))))
+            sys.stdout.write("\rOpened: {}, Closed: {}".format(str(len(opened)), closed_amount))
             if founded:
                 print()
-                print("Success")
+                print("Success", opened.counter)
                 print(founded.desc)
-                return  self.get_movements(founded), len(closed)
-                # break
-        # return [Movement(0, 0, "up"), Movement(2, 3, "down"), Movement(2, 4, "left")]
+                return self.get_movements(founded), closed_amount
 
     @staticmethod
     def get_movements(last_statement):
@@ -57,9 +53,9 @@ class DescStatement:
                 func(new_desc, new_desc.zero_x, new_desc.zero_y)
                 duplicate = opened_dict.has(new_desc)
                 if duplicate:
-                    if (opened_dict[duplicate[0]][duplicate[1]]).path_from_start > self.path_from_start + 1:
-                        (opened_dict[duplicate[0]][duplicate[1]]).path_from_start = self.path_from_start + 1
-                        (opened_dict[duplicate[0]][duplicate[1]]).father = self
+                    if duplicate.path_from_start > self.path_from_start + 1:
+                        duplicate.path_from_start = self.path_from_start + 1
+                        duplicate.father = self
                     continue
                 movement = Movement(new_desc.zero_x, new_desc.zero_y, new_desc.opposite_operations[func_name])
                 new_statement = DescStatement(desc=new_desc,
@@ -69,7 +65,7 @@ class DescStatement:
                                               movement=movement)
 
                 opened_dict.add(new_statement.weight, new_statement)
-                if new_desc.get_not_placed_tiles() == 0:
+                if new_desc.not_placed_tiles == 0:
                     return new_statement
             except Exceptions.MovingDescException:
                 continue
@@ -78,38 +74,34 @@ class DescStatement:
 
 class OpenedListContainer:
     def __init__(self):
-        self.dict = defaultdict(lambda: [])
-        self.dict_for_check = defaultdict(lambda: [])
+        self._dict = defaultdict(lambda: [])
+        self._dict_for_check  = defaultdict(lambda: [])
+        ####
+        self.counter = 0
+        ###
 
     def add(self, weight, statement):
-        self.dict[weight].append(statement)
-        self.dict_for_check[statement.desc.not_placed_tiles].append(statement)
+        self._dict[weight].append(statement)
+        self._dict_for_check[statement.desc.not_placed_tiles].append(statement)
 
-    def pop(self, weight):
-        statement = self.dict[weight].pop()
-        self.dict_for_check[statement.desc.not_placed_tiles].pop()
+    def pop_with_min_weight(self):
+        index = min(self._dict)
+        statement = self._dict[index].pop()
+        if not self._dict[index]:
+            del self._dict[index]
         return statement
 
     def has(self, new_desc):
-        for key, value in self.dict.items():
-            for i, statement in enumerate(value):
-                if statement.desc.not_placed_tiles != new_desc.not_placed_tiles:
-                    continue
-                if statement.desc == new_desc:
-                    return key, i
+        for statement in self._dict_for_check[new_desc.not_placed_tiles]:
+            # self.counter += 1
+            if statement.desc.not_placed_tiles != new_desc.not_placed_tiles:
+                continue
+            if statement.desc == new_desc:
+                return statement
         return False
 
-    def __iter__(self):
-        return self.dict.__iter__()
-
-    def __getitem__(self, item):
-        return self.dict[item]
-
-    def __delitem__(self, key):
-        del self.dict[key]
-
     def __len__(self):
-        return len(self.dict)
+        return len(self._dict)
 
 
 class Movement:

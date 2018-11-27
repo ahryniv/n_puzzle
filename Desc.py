@@ -10,7 +10,7 @@ class Desc:
             self._desc = desc
             self.size = len(desc)
             self._find_zero_field()
-            self.not_placed_tiles = self.get_not_placed_tiles()
+            self.not_placed_tiles = self._get_not_placed_tiles()
         else:
             self.size = size
             self._desc = self._create_correct_desc()
@@ -43,7 +43,7 @@ class Desc:
                     self.zero_y = j
                 row.append(elem)
             self._desc.append(row)
-        self.not_placed_tiles = self.get_not_placed_tiles()
+        self.not_placed_tiles = self._get_not_placed_tiles()
 
     def shuffle_desc(self, shuffle_number: int):
         i = 0
@@ -58,7 +58,7 @@ class Desc:
                 i += 1
             except Exceptions.MovingDescException:
                 continue
-        self.not_placed_tiles = self.get_not_placed_tiles()
+        self.not_placed_tiles = self._get_not_placed_tiles()
 
     def change_tiles(self, x1, y1, x2, y2):
         assert self._desc[x1][y1] == 0 or self._desc[x2][y2] == 0, \
@@ -69,7 +69,7 @@ class Desc:
         self._desc[x1][y1] = buffer
 
         correct_2 = int(self.is_correct_tile(x1, y1)) + int(self.is_correct_tile(x2, y2))
-        self.not_placed_tiles += correct_2 - correct_1
+        self.not_placed_tiles += correct_1 - correct_2
         self.zero_x, self.zero_y = (x1, y1) if self._desc[x1][y1] == 0 else (x2, y2)
 
     def move_down_element(self, x, y):
@@ -100,18 +100,18 @@ class Desc:
         except IndexError:
             raise Exceptions.MovingDescException("Can't move this left (x: {0}, y: {1})".format(x, y))
 
-    def get_not_placed_tiles(self):
+    def _get_not_placed_tiles(self):
         count = 0
         for i in range(self.size):
             for j in range(self.size):
-                if self.is_correct_tile(i, j):
+                if not self.is_correct_tile(i, j):
                     count += 1
-        if self._desc[self.size - 1][self.size - 1] == 0:
-            count -= 1
         return count
 
     def is_correct_tile(self, x, y):
-        if self._desc[x][y] != (x * self.size) + (y + 1):
+        if self._desc[x][y] == (x * self.size) + (y + 1):
+            return True
+        elif self._desc[x][y] == 0 and x == self.size - 1 and y == self.size - 1:
             return True
         return False
 
@@ -125,6 +125,9 @@ class Desc:
         if not isinstance(other, Desc):
             raise TypeError("not comparable types")
         return other._desc == self._desc
+
+    def __hash__(self):
+        return hash(str(self._desc))
 
     operations = {
         'up': move_up_element,

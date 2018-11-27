@@ -7,11 +7,6 @@ from Desc import Desc
 По оптимізації:
 1. в класі OpenedListContainer переглянути реалізацію 'dict_for_check', щоб вона чітко працювала в методі 'has'
     Можливо є сенс спробувати інший тип даних для 'dict_for_check'. Наприклад SortedList
-2. в класі DescStatement у функції get_daughters у стрічці:
-    if new_desc.get_not_placed_tiles() == 0:
-    функція get_not_placed_tiles() не змінюється коректно на атрибут not_placed_tiles, а вони мають бути взаємозамінні. 
-    Це важливо тому що функція вираховує це значення динамічно. Є сенс зберігати це в змінній, щоб не перераховувати сотні разів.
-    Також функцію можна зробити приватною. 
 '''
 
 
@@ -25,7 +20,7 @@ if __name__ == "__main__":
         # print(random_desc)
         #
         # desc = Desc(size=4)
-        # desc.shuffle_desc(200)
+        # desc.shuffle_desc(20)
         # print("Shuffle desc")
         # print(desc)
 
