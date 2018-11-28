@@ -21,7 +21,7 @@ class AlgorithmA:
             sys.stdout.write("\rOpened: {}, Closed: {}".format(str(len(opened)), closed_amount))
             if founded:
                 print()
-                print("Success")
+                print("Success", opened.counter)
                 print(founded.desc)
                 return self.get_movements(founded)
 
@@ -39,12 +39,12 @@ class OpenedListContainer:
         self._statements = defaultdict(lambda: [])
         self._statements_for_check = defaultdict(lambda: [])
         ####
-        # self.counter = 0
+        self.counter = 0
         ###
 
     def add(self, weight, statement):
         self._statements[weight].append(statement)
-        self._statements_for_check[statement.desc.not_placed_tiles].append(statement)
+        self._statements_for_check[statement.desc.all_manhattan + statement.desc.not_placed_tiles].append(statement)
 
     def pop_statement_with_min_weight(self):
         index = min(self._statements)
@@ -54,10 +54,8 @@ class OpenedListContainer:
         return statement
 
     def check_for_duplicates(self, new_desc, father):
-        for statement in self._statements_for_check[new_desc.not_placed_tiles]:
+        for statement in self._statements_for_check[new_desc.all_manhattan + new_desc.not_placed_tiles]:
             # self.counter += 1
-            if statement.desc.not_placed_tiles != new_desc.not_placed_tiles:
-                continue
             if statement.desc == new_desc:
                 if statement.path_from_start > father.path_from_start + 1:
                     statement.path_from_start = father.path_from_start + 1
