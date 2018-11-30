@@ -15,3 +15,21 @@ class HeuristicManhattan:
     def calculate(desc):
         # desc._calculate_all_manhattan()
         return desc.all_manhattan
+
+
+class HeuristicLinearConflictWithManhattan:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def calculate(desc):
+        return desc.calculate_linear_conflict() + desc.all_manhattan
+
+
+class HeuristicCountLessTiles:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def calculate(desc):
+        return desc.count_all_less_tiles() + desc.all_manhattan

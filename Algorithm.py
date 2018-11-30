@@ -59,7 +59,7 @@ class OpenedListContainer:
             if statement.desc == new_desc:
                 if statement.path_from_start > father.path_from_start + 1:
                     statement.path_from_start = father.path_from_start + 1
-                    statement.father = self
+                    statement.father = father
                 return True
         return False
 

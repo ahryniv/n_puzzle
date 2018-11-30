@@ -19,11 +19,35 @@ class Desc:
             self.not_placed_tiles = 0
             self.all_manhattan = 0
 
+    def is_correct(self):
+        count = self.count_all_less_tiles() + self.zero_x + 1
+        if count % 2 == 1:
+            return False
+        return True
+
     def _create_correct_desc(self):
         numbers = [number for number in range(1, self.size * self.size + 1)]
         numbers[-1] = 0
         self.zero_x, self.zero_y = self.size - 1, self.size - 1
         return [numbers[i*self.size:(i+1)*self.size] for i in range(self.size)]
+
+    def count_all_less_tiles(self):
+        count = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                if self._desc[i][j] == 0:
+                    continue
+                count += self._count_less_tiles(i, j)
+        return count
+
+    def _count_less_tiles(self, x, y):
+        tile = self._desc[x][y]
+        count = 0
+        for i in range(x, self.size):
+            for j in range(y + 1, self.size):
+                if self._desc[i][j] < tile and self._desc[i][j] != 0:
+                    count += 1
+        return count
 
     def _find_zero_field(self):
         for i in range(self.size):
@@ -130,9 +154,40 @@ class Desc:
 
     def calculate_manhattan(self, x, y):
         tile = self._desc[x][y]
+        if tile == 0:
+            return 0
         x_true = (tile - 1) // self.size
         y_true = (tile - 1) % self.size
-        result = math.sqrt(((x_true - x) ** 2) + ((y_true - y) ** 2))
+        result = math.fabs(x_true - x) + math.fabs(y_true - y)
+        # result = math.sqrt(((x_true - x) ** 2) + ((y_true - y) ** 2))
+        return result
+
+    def calculate_linear_conflict(self):
+        linear_conflict = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                linear_conflict += self.calculate_linear_for_tile(i, j)
+        return linear_conflict
+
+    def calculate_linear_for_tile(self, x, y):
+        def is_in_correct_column(x_):
+            return True if (x_ - y - 1) % self.size == 0 else False
+
+        def is_in_correct_line(y_):
+            return True if x * self.size < y_ <= (x + 1) * self.size else False
+        result = 0
+        tile = self._desc[x][y]
+        tile = tile if tile != 0 else self.size * self.size
+        if is_in_correct_column(tile):
+            for i in range(x + 1, self.size):
+                tmp = self._desc[i][y] if self._desc[i][y] != 0 else self.size * self.size
+                if is_in_correct_column(tmp) and tile > tmp:
+                    result += 2
+        if is_in_correct_line(tile):
+            for j in range(y + 1, self.size):
+                tmp = self._desc[x][j] if self._desc[x][j] != 0 else self.size * self.size
+                if is_in_correct_line(tmp) and tile > tmp:
+                    result += 2
         return result
 
     def __str__(self):
