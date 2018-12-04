@@ -1,8 +1,9 @@
 import copy
-import sys
-from collections import defaultdict
-# from sortedcontainers import SortedList
+from collections import defaultdict, namedtuple
 import Exceptions
+
+
+ReturnValue = namedtuple('ReturnedValue', ['movements', 'ever_opened', 'max_opened'])
 
 
 class AlgorithmA:
@@ -18,12 +19,12 @@ class AlgorithmA:
             current_statement = opened.pop_statement_with_min_weight()
             closed_amount += 1
             founded = current_statement.get_daughters(opened, self._heuristic_algorithm)
-            sys.stdout.write("\rOpened: {}, Closed: {}".format(str(len(opened)), closed_amount))
+            print("Closed: {0}\r".format(closed_amount), end="")
             if founded:
                 print()
-                print("Success", opened.counter)
-                print(founded.desc)
-                return self.get_movements(founded)
+                return ReturnValue(movements=self.get_movements(founded),
+                                   ever_opened=opened.counter_all,
+                                   max_opened=opened.max_in_memory)
 
     @staticmethod
     def get_movements(last_statement):
@@ -38,30 +39,38 @@ class OpenedListContainer:
     def __init__(self):
         self._statements = defaultdict(lambda: [])
         self._statements_for_check = defaultdict(lambda: [])
-        ####
-        self.counter = 0
-        ###
+        self.counter_all = 0
+        self.counter_in_memory = 0
+        self.counter_in_memory = 0
+        self.max_in_memory = 0
 
     def add(self, weight, statement):
         self._statements[weight].append(statement)
         self._statements_for_check[statement.desc.all_manhattan + statement.desc.not_placed_tiles].append(statement)
+        self.counter_all += 1
+        self.add_to_counter_in_memory()
 
     def pop_statement_with_min_weight(self):
         index = min(self._statements)
         statement = self._statements[index].pop()
         if not self._statements[index]:
             del self._statements[index]
+            self.counter_in_memory -= 1
         return statement
 
     def check_for_duplicates(self, new_desc, father):
         for statement in self._statements_for_check[new_desc.all_manhattan + new_desc.not_placed_tiles]:
-            # self.counter += 1
             if statement.desc == new_desc:
                 if statement.path_from_start > father.path_from_start + 1:
                     statement.path_from_start = father.path_from_start + 1
                     statement.father = father
                 return True
         return False
+
+    def add_to_counter_in_memory(self):
+        self.counter_in_memory += 1
+        self.max_in_memory = self.counter_in_memory if self.max_in_memory < self.counter_in_memory \
+            else self.counter_in_memory
 
     def __len__(self):
         return len(self._statements)
@@ -86,7 +95,7 @@ class DescStatement:
                 func(new_desc, new_desc.zero_x, new_desc.zero_y)
                 if opened_dict.check_for_duplicates(new_desc, self):
                     continue
-                movement = Movement(new_desc.zero_x, new_desc.zero_y, new_desc.opposite_operations[func_name])
+                movement = Movement(self.desc.zero_x, self.desc.zero_y, new_desc.opposite_operations[func_name])
                 new_statement = DescStatement(desc=new_desc, path_from_start=self.path_from_start + 1,
                                               heuristic_weight=heuristic.calculate(new_desc), father=self,
                                               movement=movement)

@@ -1,25 +1,34 @@
-import random
 import math
 import Exceptions
+from RandomNumber import random_number_below
 
 
 class Desc:
     def __init__(self, desc=None, size=3):
         self.zero_x, self.zero_y = None, None
         if desc:
-            # NEED DESC VALIDATION
             self._desc = desc
             self.size = len(desc)
-            self._find_zero_field()
-            self._calculate_not_placed_tiles()
-            self._calculate_all_manhattan()
+            try:
+                self._find_zero_field()
+                self._calculate_not_placed_tiles()
+                self._calculate_all_manhattan()
+                if not self.is_correct():
+                    raise Exceptions.Unsolvable()
+            except IndexError:
+                raise Exceptions.NotValidDesc()
         else:
             self.size = size
             self._desc = self._create_correct_desc()
             self.not_placed_tiles = 0
             self.all_manhattan = 0
+        self.green_x = None
+        self.green_y = None
 
     def is_correct(self):
+        for i in range(self.size):
+            if len(self._desc[i]) != self.size:
+                raise Exceptions.NotValidDesc()
         count = self.count_all_less_tiles() + self.zero_x + 1
         if count % 2 == 1:
             return False
@@ -57,28 +66,12 @@ class Desc:
                     self.zero_y = j
                     break
 
-    def make_random_desc(self):
-        numbers = [number for number in range(self.size * self.size)]
-        random.shuffle(numbers)
-        self._desc = []
-        for i in range(self.size):
-            row = []
-            for j in range(self.size):
-                elem = numbers.pop()
-                if elem == 0:
-                    self.zero_x = i
-                    self.zero_y = j
-                row.append(elem)
-            self._desc.append(row)
-        self._calculate_not_placed_tiles()
-        self._calculate_all_manhattan()
-
     def shuffle_desc(self, shuffle_number: int):
         i = 0
         last_operation = None
         while i < shuffle_number:
             try:
-                operation_, func = random.choice(tuple(self.operations.items()))
+                operation_, func = tuple(self.operations.items())[random_number_below(4)]
                 if self.opposite_operations[operation_] == last_operation:
                     raise Exceptions.MovingDescException()
                 func(self, self.zero_x, self.zero_y)
@@ -191,7 +184,21 @@ class Desc:
         return result
 
     def __str__(self):
-        return "\n".join(map(str, self._desc))
+        green_x = self.green_x if self.green_x else self.zero_x
+        green_y = self.green_y if self.green_y else self.zero_y
+        result = " {0} \n".format(" ".join(["___" for _ in range(self.size)]))
+        for i in range(self.size):
+            row = "|{0}|\n".format("|".join(["   " for _ in range(self.size)]))
+            slices = []
+            for j in range(self.size):
+                if j == green_y and i == green_x:
+                    slices.append("\033[1;32;40m{: >2d}\033[1;37;40m ".format(self._desc[i][j]))
+                else:
+                    slices.append("{: >2d} ".format(self._desc[i][j]))
+            row += "|{0}|\n".format("|".join(slices))
+            row += "|{0}|\n".format("|".join(["___" for _ in range(self.size)]))
+            result += row
+        return result
 
     def __getitem__(self, item):
         return self._desc[item]

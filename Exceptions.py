@@ -4,3 +4,11 @@ class DescException(Exception):
 
 class MovingDescException(DescException):
     pass
+
+
+class NotValidDesc(DescException):
+    pass
+
+
+class Unsolvable(DescException):
+    pass

@@ -13,7 +13,6 @@ class HeuristicManhattan:
 
     @staticmethod
     def calculate(desc):
-        # desc._calculate_all_manhattan()
         return desc.all_manhattan
 
 
