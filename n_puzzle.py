@@ -118,8 +118,9 @@ class Solver:
         print("Movements:")
         for movement in returned_value.movements:
             try:
+                print(self.desc, "\r", end="")
                 print("Next move:", movement)
-                print(self.desc)
+                print("----" * self.desc.size + "-")
                 func = self.desc.operations[self.desc.opposite_operations[str(movement)]]
                 func(self.desc, self.desc.zero_x, self.desc.zero_y)
             except Exceptions.MovingDescException as err:
