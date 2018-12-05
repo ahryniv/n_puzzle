@@ -201,9 +201,12 @@ class Desc:
             slices = []
             for j in range(self.size):
                 if j == self.zero_y and i == self.zero_x:
-                    slices.append(colored("{: >2d} ".format(self._desc[i][j]), "blue"))
+                    slices.append(colored("   ".format(self._desc[i][j]), "white"))
+                elif ((j - 1 == self.zero_y or j + 1 == self.zero_y) and i == self.zero_x) \
+                        or ((i - 1 == self.zero_x or i + 1 == self.zero_x) and j == self.zero_y):
+                    slices.append(colored("{: >2d} ".format(self._desc[i][j]), "red", attrs=['bold']))
                 else:
-                    slices.append("{: >2d} ".format(self._desc[i][j]))
+                    slices.append(colored("{: >2d} ".format(self._desc[i][j]), "green"))
             row += "|{0}|\n".format("|".join(slices))
             row += "|{0}|\n".format("|".join(["___" for _ in range(self.size)]))
             result += row
