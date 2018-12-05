@@ -12,6 +12,10 @@ class AlgorithmA:
 
     def solve(self, desc):
         start_statement = DescStatement(desc, path_from_start=0, heuristic_weight=0, father=None)
+        if start_statement.desc.not_placed_tiles == 0:
+            return ReturnValue(movements=self.get_movements(start_statement),
+                               ever_opened=1,
+                               max_opened=1)
         opened = OpenedListContainer()
         opened.add(0, start_statement)
         closed_amount = 0

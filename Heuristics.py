@@ -1,4 +1,6 @@
 class HeuristicNotPlacedTiles:
+    name = "Not placed tiles"
+
     def __init__(self):
         pass
 
@@ -8,6 +10,8 @@ class HeuristicNotPlacedTiles:
 
 
 class HeuristicManhattan:
+    name = "Manhattan"
+
     def __init__(self):
         pass
 
@@ -17,6 +21,8 @@ class HeuristicManhattan:
 
 
 class HeuristicLinearConflictWithManhattan:
+    name = "Linear conflict with Manhattan"
+
     def __init__(self):
         pass
 
@@ -26,6 +32,8 @@ class HeuristicLinearConflictWithManhattan:
 
 
 class HeuristicCountLessTiles:
+    name = "Count less tiles"
+
     def __init__(self):
         pass
 
