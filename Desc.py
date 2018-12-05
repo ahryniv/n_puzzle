@@ -259,6 +259,17 @@ class DescSnail(Desc):
         return desc
 
 
+class DescColumn(Desc):
+    def _create_correct_desc(self):
+        numbers = [number for number in range(1, self.size * self.size + 1)][::-1]
+        numbers[0] = 0
+        desc = [[0] * self.size for _ in range(self.size)]
+        for i in range(self.size):
+            for j in range(self.size):
+                desc[j][i] = numbers.pop()
+        return desc
+
+
 if __name__ == "__main__":
-    snail_desc = DescSnail(size=4)
+    snail_desc = DescColumn(size=4)
     print(snail_desc)

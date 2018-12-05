@@ -13,9 +13,10 @@ class Parameters:
         'NotPlacedTiles': Heuristics.HeuristicNotPlacedTiles,
         'CountLessTiles': Heuristics.HeuristicCountLessTiles
     }
-    correct_states = {
+    states = {
         'row': Desc.Desc,
-        'snail': Desc.DescSnail
+        'snail': Desc.DescSnail,
+        'column': Desc.DescColumn
     }
 
     def __init__(self):
@@ -24,7 +25,7 @@ class Parameters:
         opts, args = parser.parse_args()
         try:
             self.file = opts.file
-            self.desc_state = self.correct_states[opts.state]
+            self.desc_state = self.states[opts.state]
             self.algorithm = self.heuristics[opts.algorithm]
             self.shuffle = opts.shuffle
             self.size = opts.size
@@ -38,7 +39,7 @@ class Parameters:
 
     def add_options_to_parser(self, parser):
         heuristics = ", ".join(self.heuristics.keys())
-        states = ", ".join(self.correct_states.keys())
+        states = ", ".join(self.states.keys())
         parser.add_option('-a', '--algorithm', dest="algorithm",
                           help="[" + heuristics + "], " + "[default: %default]")
         parser.add_option('--shuffle', dest="shuffle", type="int",
