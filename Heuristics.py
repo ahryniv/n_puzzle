@@ -31,12 +31,12 @@ class HeuristicLinearConflictWithManhattan:
         return desc.calculate_linear_conflict() + desc.all_manhattan
 
 
-class HeuristicCountLessTiles:
-    name = "Count less tiles"
+class HeuristicCountInversions:
+    name = "Count inversions"
 
     def __init__(self):
         pass
 
     @staticmethod
     def calculate(desc):
-        return desc.count_all_less_tiles() + desc.all_manhattan
+        return desc.count_all_inversions() + desc.all_manhattan

@@ -18,7 +18,7 @@ class Desc:
                 self._find_zero_field()
                 self._calculate_not_placed_tiles()
                 self._calculate_all_manhattan()
-                if not self.is_correct():
+                if not self.is_solvable():
                     raise Exceptions.Unsolvable()
             except IndexError:
                 raise Exceptions.NotValidDesc()
@@ -31,14 +31,53 @@ class Desc:
             self.not_placed_tiles = 0
             self.all_manhattan = 0
 
-    def is_correct(self):
+    def _is_correct(self):
         for i in range(self.size):
             if len(self._desc[i]) != self.size:
                 raise Exceptions.NotValidDesc()
-        count = self.count_all_less_tiles() + self.zero_x + 1
-        if count % 2 == 1:
-            return False
         return True
+
+    def is_solvable(self):
+        self._is_correct()
+        less_tiles = self.count_all_inversions()
+        # for odd size puzzles
+        if self.size % 2 == 1:
+            return less_tiles % 2 == 0
+
+        # for even size puzzles
+        row = self.zero_x + 1
+        if (row % 2 == 1 and less_tiles % 2 == 0) or (row % 2 == 0 and less_tiles % 2 == 1):
+            return True
+        return False
+
+    def count_all_inversions(self):
+        count = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                if self._desc[i][j] == 0:
+                    continue
+                count += self._count_inversions(i, j)
+        print(self)
+        return count
+
+    def _count_inversions(self, x, y):
+        tile = self._desc[x][y]
+        x_tile, y_tile = self.standard_state[tile]
+        count = 0
+        # Counting inversions in same row
+        for j in range(y + 1, self.size):
+            x_correct_tmp, y_correct_tmp = self.standard_state[self._desc[x][j]]
+            if (x_correct_tmp < x_tile or (x_correct_tmp == x_tile and y_correct_tmp < y_tile)) and self._desc[x][j] != 0:
+                count += 1
+
+        # Counting inversions in rows below
+        for i in range(x + 1, self.size):
+            for j in range(self.size):
+                x_tmp, y_tmp = self.standard_state[self._desc[i][j]]
+                if (x_tmp < x_tile or (x_tmp == x_tile and y_tmp < y_tile)) and self._desc[i][j] != 0:
+                    count += 1
+
+        return count
 
     def _set_correct_dict(self):
         result = {}
@@ -52,26 +91,6 @@ class Desc:
         numbers = [number for number in range(1, self.size * self.size + 1)]
         numbers[-1] = 0
         return [numbers[i*self.size:(i+1)*self.size] for i in range(self.size)]
-
-    def count_all_less_tiles(self):
-        count = 0
-        for i in range(self.size):
-            for j in range(self.size):
-                if self._desc[i][j] == 0:
-                    continue
-                count += self._count_less_tiles(i, j)
-        return count
-
-    def _count_less_tiles(self, x, y):
-        tile = self._desc[x][y]
-        x_tile, y_tile = self.standard_state[tile]
-        count = 0
-        for i in range(x, self.size):
-            for j in range(y + 1, self.size):
-                x_tmp, y_tmp = self.standard_state[self._desc[i][j]]
-                if (x_tmp < x_tile or (x_tmp == x_tile and y_tmp < y_tile)) and self._desc[i][j] != 0:
-                    count += 1
-        return count
 
     def _find_zero_field(self):
         for i in range(self.size):
@@ -201,7 +220,7 @@ class Desc:
             slices = []
             for j in range(self.size):
                 if j == self.zero_y and i == self.zero_x:
-                    slices.append(colored("{: >2d} ".format(self._desc[i][j]), "red"))
+                    slices.append(colored("   ".format(self._desc[i][j]), "red"))
                 elif ((j - 1 == self.zero_y or j + 1 == self.zero_y) and i == self.zero_x) \
                         or ((i - 1 == self.zero_x or i + 1 == self.zero_x) and j == self.zero_y):
                     slices.append(colored("{: >2d} ".format(self._desc[i][j]), "yellow", attrs=['bold']))
@@ -274,5 +293,12 @@ class DescColumn(Desc):
 
 
 if __name__ == "__main__":
-    snail_desc = DescColumn(size=4)
-    print(snail_desc)
+    snail_desc = DescSnail(size=3)
+    for _ in range(100):
+        snail_desc.shuffle_desc(100)
+        print(snail_desc)
+        inversions = snail_desc.count_all_inversions()
+        print(inversions)
+        if inversions % 2 == 1:
+            print("error")
+            break

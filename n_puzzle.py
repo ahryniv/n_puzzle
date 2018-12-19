@@ -11,7 +11,7 @@ class Parameters:
         'Manhattan': Heuristics.HeuristicManhattan,
         'LinearConflict': Heuristics.HeuristicLinearConflictWithManhattan,
         'NotPlacedTiles': Heuristics.HeuristicNotPlacedTiles,
-        'CountLessTiles': Heuristics.HeuristicCountLessTiles
+        'CountInversions': Heuristics.HeuristicCountInversions
     }
     states = {
         'row': Desc.Desc,
@@ -51,7 +51,7 @@ class Parameters:
                           help="File with start statement of desc")
         parser.add_option('--state', dest="state",
                           help="[" + states + "], " + "[default: %default]")
-        parser.set_defaults(algorithm="Manhattan", shuffle=30, size=4, state='row')
+        parser.set_defaults(algorithm="Manhattan", shuffle=30, size=4, state='snail')
 
 
 class DescParser:
