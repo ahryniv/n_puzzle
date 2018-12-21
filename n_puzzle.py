@@ -61,6 +61,7 @@ class DescParser:
     def parse(self):
         fp = None
         result = []
+        desc_size = None
         try:
             fp = open(self.filename)
             for line in fp:
@@ -70,8 +71,11 @@ class DescParser:
                 elif "#" in line:
                     line = line.split("#")[0].strip()
                 elements = [int(x) for x in line.split()]
-                result.append(elements)
-            return result
+                if len(elements) == 1 and len(result) == 0:
+                    desc_size = elements[0]
+                    continue
+                result += elements
+            return desc_size, result
         except ValueError:
             raise Exceptions.NotValidDesc
         except FileNotFoundError:
@@ -91,10 +95,13 @@ class Solver:
         if self.parameters.file is not None:
             try:
                 desc_parser = DescParser(self.parameters.file)
-                desc_field = desc_parser.parse()
-                self.desc = self.parameters.desc_state(desc=desc_field)
-            except Exceptions.NotValidDesc:
-                print("Puzzle is not valid")
+                rv = desc_parser.parse()
+                desc_field = rv[1]
+                desc_size = rv[0]
+                self.desc = self.parameters.desc_state(desc=desc_field, size=desc_size)
+            except Exceptions.NotValidDesc as err:
+                print("Puzzle is not valid:")
+                print(err)
                 exit()
             except Exceptions.Unsolvable:
                 print("Puzzle in unsolvable")
@@ -102,6 +109,8 @@ class Solver:
         else:
             self.desc = self.parameters.desc_state(size=self.parameters.size)
             self.desc.shuffle_desc(self.parameters.shuffle)
+            if not self.desc.is_solvable():
+                raise Exceptions.Unsolvable()
 
     def solve(self):
         def get_milliseconds():

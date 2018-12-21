@@ -62,12 +62,14 @@ class OpenedListContainer:
             self.counter_in_memory -= 1
         return statement
 
-    def check_for_duplicates(self, new_desc, father):
+    def check_for_duplicates(self, new_desc, func_name, father):
         for statement in self._statements_for_check[new_desc.all_manhattan + new_desc.not_placed_tiles]:
             if statement.desc == new_desc:
                 if statement.path_from_start > father.path_from_start + 1:
                     statement.path_from_start = father.path_from_start + 1
                     statement.father = father
+                    movement = Movement(father.desc.zero_x, father.desc.zero_y, new_desc.opposite_operations[func_name])
+                    statement.movement = movement
                 return True
         return False
 
@@ -97,7 +99,7 @@ class DescStatement:
             new_desc = copy.deepcopy(self.desc)
             try:
                 func(new_desc, new_desc.zero_x, new_desc.zero_y)
-                if opened_dict.check_for_duplicates(new_desc, self):
+                if opened_dict.check_for_duplicates(new_desc, func_name, self):
                     continue
                 movement = Movement(self.desc.zero_x, self.desc.zero_y, new_desc.opposite_operations[func_name])
                 new_statement = DescStatement(desc=new_desc, path_from_start=self.path_from_start + 1,

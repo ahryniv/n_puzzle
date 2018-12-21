@@ -21,14 +21,6 @@ def make_puzzle(s, solvable, iterations):
         p[idx] = p[swi]
         p[swi] = 0
 
-        # j = 1
-        # for elem in p:
-        #     print(elem, " ", end="")
-        #     j = j + 1 if j < s else 1
-        #     if j == 1:
-        #         print()
-        # print()
-
     p = make_goal(s)
     for i in range(iterations):
         swap_empty(p)
@@ -104,7 +96,7 @@ if __name__ == "__main__":
 
     w = len(str(s * s))
     print("# This puzzle is %s" % ("solvable" if solv else "unsolvable"))
-    # print("%d" % s)
+    print("%d" % s)
     for y in range(s):
         for x in range(s):
             print("%s " % (str(puzzle[x + y * s]).rjust(w)), end="")

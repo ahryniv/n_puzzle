@@ -12,7 +12,7 @@ class Desc:
         if desc:
             self._desc = desc
             self.size = size
-            if self.size != math.sqrt(len(self._desc)):
+            if self.size != len(self._desc):
                 raise Exceptions.NotValidDesc("Size of puzzle doesn't match given size")
             self.__class__.standard_state = self.__class__.standard_state if self.__class__.standard_state \
                 else self._set_correct_dict()
@@ -33,9 +33,15 @@ class Desc:
             self.not_placed_tiles = 0
             self.all_manhattan = 0
 
-    def is_solvable(self):
-        less_tiles = self.count_all_inversions()
+    def _is_correct(self):
+        for i in range(self.size):
+            if len(self._desc[i]) != self.size:
+                raise Exceptions.NotValidDesc()
+        return True
 
+    def is_solvable(self):
+        self._is_correct()
+        less_tiles = self.count_all_inversions()
         # for odd size puzzles
         if self.size % 2 == 1:
             return less_tiles % 2 == 0
@@ -48,39 +54,52 @@ class Desc:
 
     def count_all_inversions(self):
         count = 0
-        for idx, tile in enumerate(self._desc):
-            if tile == 0:
-                continue
-            count += self._count_inversions(idx, tile)
+        for i in range(self.size):
+            for j in range(self.size):
+                if self._desc[i][j] == 0:
+                    continue
+                count += self._count_inversions(i, j)
         return count
 
-    def _count_inversions(self, idx, tile):
+    def _count_inversions(self, x, y):
+        tile = self._desc[x][y]
         x_tile, y_tile = self.standard_state[tile]
         count = 0
-        for j in range(idx + 1, len(self._desc)):
-            x_correct_tmp, y_correct_tmp = self.standard_state[self._desc[j]]
-            if (x_correct_tmp < x_tile or (x_correct_tmp == x_tile and y_correct_tmp < y_tile)) and self._desc[j] != 0:
+        # Counting inversions in same row
+        for j in range(y + 1, self.size):
+            x_correct_tmp, y_correct_tmp = self.standard_state[self._desc[x][j]]
+            if (x_correct_tmp < x_tile or (x_correct_tmp == x_tile and y_correct_tmp < y_tile)) and self._desc[x][j] != 0:
                 count += 1
+
+        # Counting inversions in rows below
+        for i in range(x + 1, self.size):
+            for j in range(self.size):
+                x_tmp, y_tmp = self.standard_state[self._desc[i][j]]
+                if (x_tmp < x_tile or (x_tmp == x_tile and y_tmp < y_tile)) and self._desc[i][j] != 0:
+                    count += 1
+
         return count
 
     def _set_correct_dict(self):
         result = {}
         correct_state = self._create_correct_desc()
-        for idx, tile in enumerate(correct_state):
-            result[tile] = int(idx / self.size), idx % self.size
+        for i in range(self.size):
+            for j in range(self.size):
+                result[correct_state[i][j]] = (i, j)
         return result
 
     def _create_correct_desc(self):
         numbers = [number for number in range(1, self.size * self.size + 1)]
         numbers[-1] = 0
-        return numbers
+        return [numbers[i*self.size:(i+1)*self.size] for i in range(self.size)]
 
     def _find_zero_field(self):
-        for idx, tile in enumerate(self._desc):
-            if tile == 0:
-                self.zero_x = int(idx / self.size)
-                self.zero_y = idx % self.size
-                break
+        for i in range(self.size):
+            for j in range(self.size):
+                if self._desc[i][j] == 0:
+                    self.zero_x = i
+                    self.zero_y = j
+                    break
 
     def shuffle_desc(self, shuffle_number: int):
         i = 0
@@ -89,7 +108,7 @@ class Desc:
             try:
                 operation_, func = tuple(self.operations.items())[random_number_below(4)]
                 if self.opposite_operations[operation_] == last_operation:
-                    continue
+                    raise Exceptions.MovingDescException()
                 func(self, self.zero_x, self.zero_y)
                 last_operation = operation_
                 i += 1
@@ -99,29 +118,19 @@ class Desc:
         self._calculate_all_manhattan()
 
     def change_tiles(self, x1, y1, x2, y2):
-        if x1 >= self.size or x2 >= self.size or y1 >= self.size or y2 >= self.size:
-            raise IndexError
-        assert self._desc[x1*self.size+y1] == 0 or self._desc[x2*self.size+y2] == 0, \
+        assert self._desc[x1][y1] == 0 or self._desc[x2][y2] == 0, \
             "Trying to move TWO not zero tiles (x: {0}, y: {1}) (x: {2}, y: {3})".format(x1, y1, x2, y2)
-        manhattan_1 = self._calculate_manhattan(x1, y1, self._desc[x1*self.size+y1]) + \
-                      self._calculate_manhattan(x2, y2, self._desc[x2*self.size+y2])
+        manhattan_1 = self._calculate_manhattan(x1, y1) + self._calculate_manhattan(x2, y2)
         correct_1 = int(self.is_correct_tile(x1, y1)) + int(self.is_correct_tile(x2, y2))
-        buffer = self._desc[x2*self.size+y2]
-        self._desc[x2*self.size+y2] = self._desc[x1*self.size+y1]
-        self._desc[x1*self.size+y1] = buffer
+        buffer = self._desc[x2][y2]
+        self._desc[x2][y2] = self._desc[x1][y1]
+        self._desc[x1][y1] = buffer
 
         correct_2 = int(self.is_correct_tile(x1, y1)) + int(self.is_correct_tile(x2, y2))
-        manhattan_2 = self._calculate_manhattan(x1, y1, self._desc[x1*self.size+y1]) + \
-                      self._calculate_manhattan(x2, y2, self._desc[x2*self.size+y2])
+        manhattan_2 = self._calculate_manhattan(x1, y1) + self._calculate_manhattan(x2, y2)
         self.not_placed_tiles += correct_1 - correct_2
         self.all_manhattan += manhattan_2 - manhattan_1
-
-        ### DELETE it
-        if self.not_placed_tiles < 0 or self.all_manhattan < 0:
-            raise Exceptions.NotValidDesc("error in change tiles")
-
-        ###
-        self.zero_x, self.zero_y = (x1, y1) if self._desc[x1*self.size+y1] == 0 else (x2, y2)
+        self.zero_x, self.zero_y = (x1, y1) if self._desc[x1][y1] == 0 else (x2, y2)
 
     def move_down_element(self, x, y):
         try:
@@ -153,26 +162,24 @@ class Desc:
 
     def _calculate_not_placed_tiles(self):
         self.not_placed_tiles = 0
-        for idx, tile in enumerate(self._desc):
-            # if tile == 0:
-            #     continue
-            i, j = int(idx / self.size), idx % self.size
-            if not self.is_correct_tile(i, j):
-                self.not_placed_tiles += 1
+        for i in range(self.size):
+            for j in range(self.size):
+                if not self.is_correct_tile(i, j):
+                    self.not_placed_tiles += 1
 
     def is_correct_tile(self, x, y):
-        tile = self._desc[x*self.size+y]
-        if (x, y) == self.standard_state[tile]:
+        if (x, y) == self.standard_state[self._desc[x][y]]:
             return True
         return False
 
     def _calculate_all_manhattan(self):
         self.all_manhattan = 0
-        for idx, tile in enumerate(self._desc):
-            x, y = int(idx / self.size), idx % self.size
-            self.all_manhattan += self._calculate_manhattan(x, y, tile)
+        for i in range(self.size):
+            for j in range(self.size):
+                self.all_manhattan += self._calculate_manhattan(i, j)
 
-    def _calculate_manhattan(self, x, y, tile):
+    def _calculate_manhattan(self, x, y):
+        tile = self._desc[x][y]
         if tile == 0:
             return 0
         x_true, y_true = self.standard_state[tile]
@@ -181,53 +188,48 @@ class Desc:
 
     def calculate_linear_conflict(self):
         linear_conflict = 0
-        for idx, tile in enumerate(self._desc):
-            linear_conflict += self.calculate_linear_for_tile(idx, tile)
+        for i in range(self.size):
+            for j in range(self.size):
+                linear_conflict += self.calculate_linear_for_tile(i, j)
         return linear_conflict
 
-    # def calculate_linear_for_tile(self, idx, tile):
-    #     x, y = int(idx / self.size), idx % self.size
-    #     result = 0
-    #     x_true, y_true = self.standard_state[tile]
-    #     tile = tile if tile != 0 else self.size ** 2
-    #     if y == y_true:
-    #         for i in range(x + 1, self.size):
-    #             tmp = self._desc[i*self.size+y]
-    #             tmp_y = self.standard_state[tmp][1]
-    #             tmp = tmp if tmp != 0 else self.size ** 2
-    #             if tmp_y == y and tile > tmp:
-    #                 result += 2
-    #     if x == x_true:
-    #         for j in range(y + 1, self.size):
-    #             tmp = self._desc[x][j]
-    #             tmp_x = self.standard_state[tmp][0]
-    #             tmp = tmp if tmp else self.size ** 2
-    #             if tmp_x == x and tile > tmp:
-    #                 result += 2
-    #     return result
+    def calculate_linear_for_tile(self, x, y):
+        result = 0
+        x_true, y_true = self.standard_state[self._desc[x][y]]
+        tile = self._desc[x][y]
+        tile = tile if tile != 0 else self.size ** 2
+        if y == y_true:
+            for i in range(x + 1, self.size):
+                tmp = self._desc[i][y]
+                tmp_y = self.standard_state[tmp][1]
+                tmp = tmp if tmp != 0 else self.size ** 2
+                if tmp_y == y and tile > tmp:
+                    result += 2
+        if x == x_true:
+            for j in range(y + 1, self.size):
+                tmp = self._desc[x][j]
+                tmp_x = self.standard_state[tmp][0]
+                tmp = tmp if tmp else self.size ** 2
+                if tmp_x == x and tile > tmp:
+                    result += 2
+        return result
 
     def __str__(self):
         result = " {0} \n".format(" ".join(["___" for _ in range(self.size)]))
-        column_counter = 1
-        slices = None
-        row = None
-        for idx, tile in enumerate(self._desc):
-            if column_counter == 1:
-                slices = []
-                row = "|{0}|\n".format("|".join(["   " for _ in range(self.size)]))
-            i, j = int(idx / self.size), idx % self.size
-            if j == self.zero_y and i == self.zero_x:
-                slices.append("   ".format(tile))
-            elif ((j - 1 == self.zero_y or j + 1 == self.zero_y) and i == self.zero_x) \
-                    or ((i - 1 == self.zero_x or i + 1 == self.zero_x) and j == self.zero_y):
-                slices.append(colored("{: >2d} ".format(tile), "yellow"))
-            else:
-                slices.append(colored("{: >2d} ".format(tile), "green"))
-            column_counter = 1 if column_counter == self.size else column_counter + 1
-            if column_counter == 1:
-                row += "|{0}|\n".format("|".join(slices))
-                row += "|{0}|\n".format("|".join(["___" for _ in range(self.size)]))
-                result += row
+        for i in range(self.size):
+            row = "|{0}|\n".format("|".join(["   " for _ in range(self.size)]))
+            slices = []
+            for j in range(self.size):
+                if j == self.zero_y and i == self.zero_x:
+                    slices.append(colored("   ".format(self._desc[i][j]), "red"))
+                elif ((j - 1 == self.zero_y or j + 1 == self.zero_y) and i == self.zero_x) \
+                        or ((i - 1 == self.zero_x or i + 1 == self.zero_x) and j == self.zero_y):
+                    slices.append(colored("{: >2d} ".format(self._desc[i][j]), "yellow", attrs=['bold']))
+                else:
+                    slices.append(colored("{: >2d} ".format(self._desc[i][j]), "green"))
+            row += "|{0}|\n".format("|".join(slices))
+            row += "|{0}|\n".format("|".join(["___" for _ in range(self.size)]))
+            result += row
         return result
 
     def __getitem__(self, item):
@@ -258,31 +260,30 @@ class DescSnail(Desc):
         numbers = [number for number in range(1, self.size * self.size + 1)][::-1]
         numbers[0] = 0
         moves = ["right", "down", "left", "up"]
-        desc_ = [[0]*self.size for _ in range(self.size)]
+        desc = [[0]*self.size for _ in range(self.size)]
         i = 0
         j = -1
         i_move = 0
-        res = [0] * (self.size ** 2)
         while numbers:
-            if moves[i_move] == "right" and j < self.size - 1 and desc_[i][j + 1] == 0:
+            if moves[i_move] == "right" and j < self.size - 1 and desc[i][j + 1] == 0:
                 j += 1
-            elif moves[i_move] == "down" and i < self.size - 1 and desc_[i + 1][j] == 0:
+            elif moves[i_move] == "down" and i < self.size - 1 and desc[i + 1][j] == 0:
                 i += 1
-            elif moves[i_move] == "left" and j > 0 and desc_[i][j - 1] == 0:
+            elif moves[i_move] == "left" and j > 0 and desc[i][j - 1] == 0:
                 j -= 1
-            elif moves[i_move] == "up" and i > 0 and desc_[i - 1][j] == 0:
+            elif moves[i_move] == "up" and i > 0 and desc[i - 1][j] == 0:
                 i -= 1
             else:
                 i_move = i_move + 1 if i_move < len(moves) - 1 else 0
                 continue
             n = numbers.pop()
-            desc_[i][j] = n
-            res[i * self.size + j] = n
-        return res
+            desc[i][j] = n
+        self.zero_x, self.zero_y = i, j
+        return desc
 
     def is_solvable(self):
+        self._is_correct()
         less_tiles = self.count_all_inversions()
-
         # for odd size puzzles
         if self.size % 2 == 1:
             return less_tiles % 2 == 0
@@ -298,15 +299,15 @@ class DescColumn(Desc):
     def _create_correct_desc(self):
         numbers = [number for number in range(1, self.size * self.size + 1)][::-1]
         numbers[0] = 0
-        desc_ = [0] * (self.size ** 2)
-        for idx in range(self.size ** 2):
-            i, j = int(idx / self.size), idx % self.size
-            desc_[(j * self.size) + i] = numbers.pop()
-        return desc_
+        desc = [[0] * self.size for _ in range(self.size)]
+        for i in range(self.size):
+            for j in range(self.size):
+                desc[j][i] = numbers.pop()
+        return desc
 
     def is_solvable(self):
+        self._is_correct()
         less_tiles = self.count_all_inversions()
-
         # for odd size puzzles
         if self.size % 2 == 1:
             return less_tiles % 2 == 0
@@ -319,14 +320,12 @@ class DescColumn(Desc):
 
 
 if __name__ == "__main__":
-    desc = Desc(size=5)
-    # desc.shuffle_desc(2)
-    # descColumn = DescColumn(size=5)
-    # descColumn.shuffle_desc(20000)
-    # descSnail = DescSnail(size=5)
-    # descSnail.shuffle_desc(20000)
+    desc = Desc(size=4)
+    desc.shuffle_desc(20000)
+    descColumn = DescColumn(size=5)
+    descColumn.shuffle_desc(20000)
+    descSnail = DescSnail(size=4)
+    descSnail.shuffle_desc(20000)
     print(desc)
-    print(desc.not_placed_tiles)
-    # print(descColumn)
-    # print(descSnail)
-
+    print(descColumn)
+    print(descSnail)
