@@ -182,29 +182,28 @@ class Desc:
     def calculate_linear_conflict(self):
         linear_conflict = 0
         for idx, tile in enumerate(self._desc):
-            linear_conflict += self.calculate_linear_for_tile(idx, tile)
+            x, y = int(idx / self.size), idx % self.size
+            linear_conflict += self._calculate_linear_for_tile(x, y, tile)
         return linear_conflict
 
-    # def calculate_linear_for_tile(self, idx, tile):
-    #     x, y = int(idx / self.size), idx % self.size
-    #     result = 0
-    #     x_true, y_true = self.standard_state[tile]
-    #     tile = tile if tile != 0 else self.size ** 2
-    #     if y == y_true:
-    #         for i in range(x + 1, self.size):
-    #             tmp = self._desc[i*self.size+y]
-    #             tmp_y = self.standard_state[tmp][1]
-    #             tmp = tmp if tmp != 0 else self.size ** 2
-    #             if tmp_y == y and tile > tmp:
-    #                 result += 2
-    #     if x == x_true:
-    #         for j in range(y + 1, self.size):
-    #             tmp = self._desc[x][j]
-    #             tmp_x = self.standard_state[tmp][0]
-    #             tmp = tmp if tmp else self.size ** 2
-    #             if tmp_x == x and tile > tmp:
-    #                 result += 2
-    #     return result
+    def _calculate_linear_for_tile(self, x, y, tile):
+        result = 0
+        x_true, y_true = self.standard_state[tile]
+        tile = tile if tile != 0 else self.size ** 2
+        idx = x * self.size + y
+        if y == y_true:
+            for tmp_tile in self._desc[idx::self.size]:
+                tmp_y = self.standard_state[tmp_tile][1]
+                tmp_tile = tmp_tile if tmp_tile != 0 else self.size ** 2
+                if tmp_y == y and tile > tmp_tile:
+                    result += 2
+        if x == x_true:
+            for tmp_tile in self._desc[idx:((idx+self.size)//self.size)*self.size]:
+                tmp_x = self.standard_state[tmp_tile][0]
+                tmp_tile = tmp_tile if tmp_tile else self.size ** 2
+                if tmp_x == x and tile > tmp_tile:
+                    result += 2
+        return result
 
     def __str__(self):
         result = " {0} \n".format(" ".join(["___" for _ in range(self.size)]))
@@ -220,9 +219,9 @@ class Desc:
                 slices.append("   ".format(tile))
             elif ((j - 1 == self.zero_y or j + 1 == self.zero_y) and i == self.zero_x) \
                     or ((i - 1 == self.zero_x or i + 1 == self.zero_x) and j == self.zero_y):
-                slices.append(colored("{: >2d} ".format(tile), "yellow"))
+                slices.append(colored("{: >2d} ".format(tile), "cyan", attrs=["bold"]))
             else:
-                slices.append(colored("{: >2d} ".format(tile), "green"))
+                slices.append(colored("{: >2d} ".format(tile), "cyan"))
             column_counter = 1 if column_counter == self.size else column_counter + 1
             if column_counter == 1:
                 row += "|{0}|\n".format("|".join(slices))
