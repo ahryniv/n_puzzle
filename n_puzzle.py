@@ -29,9 +29,9 @@ class Parameters:
             self.algorithm = self.heuristics[opts.algorithm]
             self.shuffle = opts.shuffle
             self.size = opts.size
-            if self.shuffle < 0:
+            if self.shuffle < 1 or self.shuffle > 10000:
                 raise KeyError(self.shuffle)
-            if self.size < 2:
+            if self.size < 3:
                 raise KeyError(self.size)
         except KeyError as err:
             print("This value isn't correct:", err)
@@ -44,9 +44,9 @@ class Parameters:
                           help="[" + heuristics + "], " + "[default: %default]")
         parser.add_option('--shuffle', dest="shuffle", type="int",
                           help="Amount of random moves from correct state"
-                               " of desc. Shouldn't be negative [default: %default]")
+                               " of desc. Should be between 1 and 10000 [default: %default]")
         parser.add_option('-s', '--size', dest="size", type="int",
-                          help="Size of the desc. Should be greater than one [default: %default]")
+                          help="Size of the desc. Should be greater or equal to 3 [default: %default]")
         parser.add_option('-f', '--file', dest="file",
                           help="File with start statement of desc")
         parser.add_option('--state', dest="state",
@@ -71,13 +71,15 @@ class DescParser:
                 elif "#" in line:
                     line = line.split("#")[0].strip()
                 elements = [int(x) for x in line.split()]
-                if len(elements) == 1 and len(result) == 0:
+                if len(elements) == 1 and len(result) == 0 and desc_size is None:
                     desc_size = elements[0]
                     continue
+                elif len(elements) != desc_size:
+                    raise Exceptions.NotValidDesc('This line "{0}" should have {1} tiles, {2} given'.format(line, str(desc_size), str(len(elements))))
                 result += elements
             return desc_size, result
         except ValueError:
-            raise Exceptions.NotValidDesc
+            raise Exceptions.NotValidDesc()
         except FileNotFoundError:
             print("File not found:", self.filename)
             exit()

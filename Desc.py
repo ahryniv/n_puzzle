@@ -16,6 +16,7 @@ class Desc:
                 raise Exceptions.NotValidDesc("Size of puzzle doesn't match given size")
             self.__class__.standard_state = self.__class__.standard_state if self.__class__.standard_state \
                 else self._set_correct_dict()
+            self.is_correct()
             try:
                 self._find_zero_field()
                 self._calculate_not_placed_tiles()
@@ -33,16 +34,24 @@ class Desc:
             self.not_placed_tiles = 0
             self.all_manhattan = 0
 
+    def is_correct(self):
+        if len(self._desc) != self.size ** 2:
+            raise Exceptions.NotValidDesc("Size of desc doesn't match with amount of tiles")
+        for key in self.standard_state.keys():
+            if key not in self._desc:
+                raise Exceptions.NotValidDesc("There is not such tile in your puzzle: " + str(key))
+        return True
+
     def is_solvable(self):
-        less_tiles = self.count_all_inversions()
+        inversions = self.count_all_inversions()
 
         # for odd size puzzles
         if self.size % 2 == 1:
-            return less_tiles % 2 == 0
+            return inversions % 2 == 0
 
         # for even size puzzles
         row = self.zero_x + 1
-        if (row % 2 == 1 and less_tiles % 2 == 1) or (row % 2 == 0 and less_tiles % 2 == 0):
+        if (row % 2 == 1 and inversions % 2 == 1) or (row % 2 == 0 and inversions % 2 == 0):
             return True
         return False
 
@@ -119,7 +128,6 @@ class Desc:
         ### DELETE it
         if self.not_placed_tiles < 0 or self.all_manhattan < 0:
             raise Exceptions.NotValidDesc("error in change tiles")
-
         ###
         self.zero_x, self.zero_y = (x1, y1) if self._desc[x1*self.size+y1] == 0 else (x2, y2)
 
@@ -280,15 +288,18 @@ class DescSnail(Desc):
         return res
 
     def is_solvable(self):
-        less_tiles = self.count_all_inversions()
+        inversions = self.count_all_inversions()
 
         # for odd size puzzles
         if self.size % 2 == 1:
-            return less_tiles % 2 == 0
+            return inversions % 2 == 0
 
         # for even size puzzles
         row = self.zero_x + 1
-        if (row % 2 == 1 and less_tiles % 2 == 0) or (row % 2 == 0 and less_tiles % 2 == 1):
+        if (self.size // 2) % 2 == 0 and ((row % 2 == 1 and inversions % 2 == 0)
+                                          or (row % 2 == 0 and inversions % 2 == 1)):
+            return True
+        elif (self.size // 2) % 2 == 1 and row % 2 == inversions % 2 and row % 2 != self.zero_x:
             return True
         return False
 
